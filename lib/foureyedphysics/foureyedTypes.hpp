@@ -22,50 +22,36 @@
  * 
 *******************************************************************************/
 
-/***************************** eepromStorage.hpp ********************************
+/****************************** foureyedTypes.hpp ******************************
  * 
- * EEPROM storage interface. Uses I2C
- * 
- * No setup is required. Just make sure I2C is running and keep in mind that
- * the eeprom takes time to write data (max 5 ms) and won't accept commands
- * during the time frame
- * 
- * How storage is used: (note - units are bytes, not bits!)
- * 0x0000..............m_size - 1 - m_confidSize.........m_size - 1
- * |  whatever data             |      configuration data      |
- * 
- * I think the functions are pretty self-explanatory
+ * Physical units are defined here. Some libraries depend on them
  * 
 *******************************************************************************/
 
+
+#ifndef FOUREYEDTYPES
+#define FOUREYEDTYPES
+
 #include <Arduino.h>
-
-#ifndef FOUREYED_EEPROMSTORE
-#define FOUREYED_EEPROMSTORE
-
-#include <Wire.h>
 
 namespace fourEyed
 {
-	class Storage
+	struct accel
 	{
-		private:
-			uint8_t 	m_address;
+		float x;
+		float y;
+		float z;
 
-			void writeNoWarn (uint16_t address, uint8_t size, byte * data);
-			void readNoWarn	 (uint16_t address, uint8_t size, byte * res);
-
-		public:
-			Storage (uint8_t address, uint16_t sizeBytes, uint8_t configSizeBytes);
-			
-			uint16_t 	m_size; // in bytes, up to 512K bits (64kbytes)
-			uint8_t 	m_configsize; // size of space allocated to config, in bytes
-
-			void write 		 (uint16_t address, uint8_t size, byte * data);
-			void read  		 (uint16_t address, uint8_t size, byte * buffer);
-			void getConfig 	 (uint8_t  config,  uint8_t size, byte * buffer);
-			void saveConfig  (uint8_t  config,  uint8_t size, byte * data);
+		void print (void) // only for debug
+		{
+			Serial.print (x);
+			Serial.print ("\t");
+			Serial.print (y);
+			Serial.print ("\t");
+			Serial.print (z);
+			Serial.print ("\n");
+		}
 	};
-} // namespace fourEyed
+}
 
 #endif

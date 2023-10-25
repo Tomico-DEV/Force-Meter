@@ -1,23 +1,55 @@
-#include "forceMeter.hpp"
+/******************************** MIT LICENSE **********************************
+ * 
+ * Copyright 2023 4eyedMan
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining 
+ * a copy of this software and associated documentation files (the “Software”),
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+*******************************************************************************/
 
+/******************************* forceMeter.cpp ********************************
+ * 
+ * Force meter functionality
+ * 
+*******************************************************************************/
+
+
+#include "forceMeter.hpp"
 
 using namespace fourEyed;
 
 typedef void (*ForceMeterFn) (ForceMeter * classptr);
-
 
 union floatByte
 {
 	float f;
 	byte b[4];
 };
+// for convenience of interacting with the EEPROM (reading bytes and turning them into one float)
 
 enum
 {
 	FLOAT_LOAD_CELL_CAL
 };
+// config options. Must be in line with config size
 
 bool isAllOnes (floatByte x)
+// returns true if all bits are 1
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -56,42 +88,38 @@ void ForceMeter::tare (void)
 
 void ForceMeter::setup (void)
 {
-	// make sure Wire, Serial, and SPI are already set up!
-	/*
-	Wire.begin ();
-
-	SPI.beginTransaction (SPISettings (10000000, MSBFIRST, SPI_MODE0));
-	SPI.setClockDivider(SPI_CLOCK_DIV2);
-	SPI.begin ();
-	
-	Serial.begin (115200);
-	*/
 	pinMode (m_serLight, OUTPUT);
 	pinMode (m_recLight, OUTPUT);
 
-	m_tareButton-> setup ();
-	m_tareButton->classPointer = this;
-	m_tareButton->m_onDown = [] (ForceMeter * fmptr) { fmptr->tare (); };
+	m_tareButton->setup ();
+	m_tareButton->classPointer 	= this;
+	m_tareButton->m_onDown 		= [] (ForceMeter * fmptr) { fmptr->tare (); };
 
-	m_captureButton->setup 	  ();
-	m_captureButton->classPointer = this;
+	m_captureButton->setup ();
+	m_captureButton->classPointer 	= this;
 	m_captureButton->m_onShortPress	= [] (ForceMeter * fmptr) { fmptr->m_capturing = false; fmptr->capture (); };
-	m_captureButton->m_onHold 	= [] (ForceMeter * fmptr) { fmptr->captureHold (); };
-	m_captureButton->m_onDouble = [] (ForceMeter * fmptr) { fmptr->captureDblT (); };
+	m_captureButton->m_onHold 		= [] (ForceMeter * fmptr) { fmptr->captureHold (); };
+	m_captureButton->m_onDouble 	= [] (ForceMeter * fmptr) { fmptr->captureDblT (); };
 
-	m_accelerometer -> setup ();
+	m_accelerometer->setup ();
 
 	m_sevenSeg->setup ();
 	m_sevenSeg->clear ();
 
-	/* Startup animation
+
+
+	/*************************** Startup animation ***************************/
+	/*
+
 	 ### ###  ### ### ### ###
 	#       #    #       #   # see max7219.h for more details
 	 ### ###      ### ###    #
 
 	 also gives time for the EEPROM to write in case 
 	 it had been written to previously for any reason
+
 	*/
+
 	const uint16_t frameDelay = 50;
 	for (uint8_t i = 0; i < 2; i++)
 	{
@@ -115,17 +143,19 @@ void ForceMeter::setup (void)
 	delay (frameDelay);
 	m_sevenSeg->transfer (1, B00010001);
 
+	/*************************************************************************/
+
 	floatByte conversionFactor;
-	//m_eeprom->saveConfig (FLOAT_LOAD_CELL_CAL, 4, (byte *)&conversionFactor);
-	//delay(5);
+	
 	m_eeprom->getConfig (FLOAT_LOAD_CELL_CAL, 4, (byte *)&conversionFactor);
 	m_loadCell->setup   (conversionFactor.f);
 	
 }
 
 void ForceMeter::checkSerial (void)
+// Serial functionality
 {
-	if ( Serial )
+	if ( Serial ) // true when Serial is open
 	{
 		pinMode (m_serLight, HIGH);
 
@@ -251,6 +281,7 @@ void ForceMeter::capture 	 (void)
 		m_captureButton->loop ();
 		m_tareButton->loop ();
 
+		// get readings
 		m_loadReading = m_loadCell->getReadingNewtons (true) - m_loadTare;
 		m_accelerometer->getAccel (m_accelReading);
 
@@ -258,27 +289,29 @@ void ForceMeter::capture 	 (void)
 		m_accelReading.y -= m_accelTare.y;
 		m_accelReading.z -= m_accelTare.z;
 
+		// display values
 		m_sevenSeg->showFloat (m_loadReading, 1, 4);
 		m_sevenSeg->showFloat (m_accelReading.y, 5, 8);
 
+		// save readings
 		m_eeprom->write (saveAddr, 4, (byte *)loadReadingptr);
-		delay (5);
+		delay (5); // wait for eeprom to write
 		m_eeprom->write (saveAddr + 4, 4, (byte *)accelYReadingptr);
 		
 		saveAddr += 8; // size of two floats, one for each reading
 
-		if (saveAddr >= maxSave )
+		if (saveAddr >= maxSave ) // out of mem
 		{
 			break;
 		}
-
 		
+		// show how much mem is left through the brightness of the LED
 		uint8_t ledVal = map(saveAddr, 0, maxSave, 255, 0);
-
 		analogWrite (m_recLight, ledVal);
+
 	} while ( m_capturing );
 
-	if (saveAddr >= maxSave)
+	if (saveAddr >= maxSave) // mem full!
 	{
 		m_sevenSeg->clear ();
 		m_sevenSeg->writeChar (4, 'F');
@@ -306,9 +339,11 @@ void ForceMeter::capture 	 (void)
 }
 
 void ForceMeter::captureHold (void)
+// record when button is held down
 {
 	m_capturing = true;
 
+	// stop recording when button is let go
 	m_captureButton->m_onUp = [] (ForceMeter * fmptr) { fmptr->m_capturing = false; };
 
 	capture ();
@@ -317,9 +352,11 @@ void ForceMeter::captureHold (void)
 }
 
 void ForceMeter::captureDblT (void)
+// record when button is double tapped
 {
 	m_capturing = true;
 
+	// stop recording when button is pressed once
 	m_captureButton->m_onShortPress = [] (ForceMeter * fmptr) { fmptr->m_capturing = false; };
 
 	capture ();

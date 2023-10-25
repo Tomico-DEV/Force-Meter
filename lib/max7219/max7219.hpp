@@ -1,3 +1,69 @@
+/******************************** MIT LICENSE **********************************
+ * 
+ * Copyright 2023 4eyedMan
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining 
+ * a copy of this software and associated documentation files (the “Software”),
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+*******************************************************************************/
+
+/********************************* max7219.hpp *********************************
+ * 
+ * 7 segment array driver. Uses SPI
+ * 
+ * use setup () to initialize
+ * 
+ * transfer (a, data) writes data to register with address a
+ * with the current configuration, when a is the number of a digit,
+ * each bit in data will determine the state of a segment in that
+ * digit. Refer to the diagram below
+ * 
+ * NOTE: digits ARE 1-INDEXED! (1-8) THEY DO NOT START AT 0
+ * 
+ * Diagram:
+ * 
+ *  AAAA
+ * F    B
+ * F    B
+ * F    B
+ *  GGGG
+ * E    C
+ * E    C
+ * E    C
+ *  DDDD  DP
+ *
+ * The bits in data (written as a binary numeber - begins with B) 
+ * represents: DP A B C D E F G
+ * 
+ * so transfer (1, B01111011) will display 9 at digit 1
+ * 
+ * I'd advise you to use writeNum or writeChar, they are much more intuitive
+ * 
+ * showFloat (num, a, b) displays a float num of two decimal places from digits
+ * a to b. Everything is truncated
+ * 
+ * clear () writes all digits with B00000000
+ * 
+ * see the SVN defines, kSvnAlphabets, and writeChar if you want to add
+ * extra characters
+ * 
+*******************************************************************************/
+
 #include <Arduino.h>
 
 #ifndef FOUREYED_MAX7219
@@ -21,28 +87,9 @@
 // These values represent corresponding indexes for alphabetic
 // characets in the ksvnAlphabets[] array
 
-// NOTE: digits ARE 1-INDEXED! THEY DO NOT START AT 0
-
-/*
-Diagram:
-
-   AAAA
-  F    B
-  F    B
-  F    B
-   GGGG
-  E    C
-  E    C
-  E    C
-   DDDD  DP
-
-The binary number (begins with B) represents: DP A B C D E F G
-*/
-
-
 namespace fourEyed 
 {
-
+	// font for characters
   	const uint8_t ksvnAlphabets[] = {
 		B00000000,
 		B01110111,
@@ -59,6 +106,7 @@ namespace fourEyed
 		B00111110
   	};
 
+	// font for numbers
 	const uint8_t ksvnNumbers[] = {
 		B01111110, // 0
 		B00110000, // 1

@@ -22,45 +22,16 @@
  * 
 *******************************************************************************/
 
-/********************************** hx711.hpp **********************************
+/******************************* classImpl.cpp ********************************
  * 
- * Library for the HX711 load cell ADC
- * 
- * use setup (conversion factor) to set pinmode and conversion factor for bits
- * to newtons
- * 
- * use getReadingNewtons (bool waitForConversion) to get readings (Newtons)
- * 
- * if waitForConversion is true, the Arduino will wait for the HX711 to signal
- * the completion of its conversion. This depends on the HX711's sample rate 
- * and could take a while, so I suggest you set it to true and call it after 
- * everything else has been processed!
+ * This is where templates used in the code are declared. This must be done
+ * or the compiler will throw a undefined reference error
  * 
 *******************************************************************************/
 
-#include <Arduino.h>
+#include "button.cpp"
+#include "forceMeter.hpp"
 
-#ifndef LOADCELL
-#define LOADCELL
-
-namespace fourEyed
-{
-
-	class LoadCell
-	{
-		private:
-			int m_clockPin;
-			int m_dataPin;
-			float m_conversionFactor;
-		
-		public:
-			LoadCell (int clockPin, int dataPin);
-			
-			void setup (float conversionFactor);
-			long getRawReading (bool waitForConversion);
-			float getReadingNewtons (bool waitForConversion);
-	};
-
-	}
-
-#endif
+template fourEyed::Button<fourEyed::ForceMeterFn, fourEyed::ForceMeter>::Button (uint8_t buttonPin, bool prevState);
+template void fourEyed::Button<fourEyed::ForceMeterFn, fourEyed::ForceMeter>::setup (bool prevState);
+template void fourEyed::Button<fourEyed::ForceMeterFn, fourEyed::ForceMeter>::loop ();

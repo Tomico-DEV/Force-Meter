@@ -24,15 +24,15 @@ MPU6050::MPU6050 (uint8_t address, uint8_t sampleRate, uint8_t sampleRange)
 	{
 	case 2:
 		m_sampleRangeVal = 000;
-		m_newtonPerBits  = 1671.8367f;
+		m_accelPerBits  = 1671.8367f;
 		break;
 	case 4:
 		m_sampleRangeVal = 010;
-		m_newtonPerBits  = 835.9183f;
+		m_accelPerBits  = 835.9183f;
 		break;
 	case 8:
 		m_sampleRangeVal = 020;
-		m_newtonPerBits  = 417.9591f;
+		m_accelPerBits  = 417.9591f;
 		break;
 	default:
 		Serial.println (
@@ -41,7 +41,7 @@ MPU6050::MPU6050 (uint8_t address, uint8_t sampleRate, uint8_t sampleRange)
 			);
 	case 16:
 		m_sampleRangeVal = 030;
-		m_newtonPerBits  = 208.9795f;
+		m_accelPerBits  = 208.9795f;
 		break;
 	}
 }
@@ -77,8 +77,8 @@ void MPU6050::getAccel (accel& result)
 
 	result = 
 	{
-		.x = ((Wire.read() << 8 | Wire.read()) / m_newtonPerBits),
-		.y = ((Wire.read() << 8 | Wire.read()) / m_newtonPerBits),
-		.z = ((Wire.read() << 8 | Wire.read()) / m_newtonPerBits)	
+		.x = ((Wire.read() << 8 | Wire.read()) / m_accelPerBits),
+		.y = ((Wire.read() << 8 | Wire.read()) / m_accelPerBits),
+		.z = ((Wire.read() << 8 | Wire.read()) / m_accelPerBits)	
 	};
 }
