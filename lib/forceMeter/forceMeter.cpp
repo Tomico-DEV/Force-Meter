@@ -88,6 +88,7 @@ void ForceMeter::tare (void)
 
 void ForceMeter::setup (void)
 {
+	Serial.println ("NOTICE:  Force meter starting up...");
 	pinMode (m_serLight, OUTPUT);
 	pinMode (m_recLight, OUTPUT);
 
@@ -100,11 +101,15 @@ void ForceMeter::setup (void)
 	m_captureButton->m_onShortPress	= [] (ForceMeter * fmptr) { fmptr->m_capturing = false; fmptr->capture (); };
 	m_captureButton->m_onHold 		= [] (ForceMeter * fmptr) { fmptr->captureHold (); };
 	m_captureButton->m_onDouble 	= [] (ForceMeter * fmptr) { fmptr->captureDblT (); };
+	Serial.println ("NOTICE:  PINMODE OK!");
 
 	m_accelerometer->setup ();
+	Serial.println ("NOTICE:  I2C OK!");
+	Serial.println ("NOTICE:  Success!");
 
 	m_sevenSeg->setup ();
 	m_sevenSeg->clear ();
+
 
 
 
