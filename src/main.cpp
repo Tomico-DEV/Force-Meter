@@ -70,8 +70,8 @@
 /* MISC */
 #define CAPTURE_BUTTON 3 // record button
 #define TARE_BUTTON	   2 // tare button
-#define REC_LED		   6 // LED to indicate recording
-#define SER_LED 	   7 // LED to indicate serial activity
+#define REC_LED		   7 // LED to indicate recording
+#define SER_LED 	   6 // LED to indicate serial activity
 
 
 #include "forceMeter.hpp"
